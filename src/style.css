@@ -493,7 +493,7 @@ input[type="checkbox"] {
 }
 .metrics {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 16px;
   margin: 20px 0;
 }
@@ -1630,9 +1630,6 @@ main {
   .two-columns {
     grid-template-columns: 1fr;
   }
-  .metrics {
-    grid-template-columns: 1fr 1fr;
-  }
   .local-badge {
     display: none;
   }
@@ -1717,5 +1714,57 @@ main {
     right: auto;
     transform: translateX(-50%);
     bottom: calc(var(--log-dock-height) + 12px);
+  }
+}
+
+/* Compact device summary, including the device serial number. */
+#section-overview .metrics {
+  grid-template-columns: 1.2fr repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin: 14px 0;
+}
+.metrics .metric {
+  min-width: 0;
+  min-height: 98px;
+  padding: 12px 10px;
+}
+.metrics .metric-label {
+  font-size: 10px;
+  white-space: nowrap;
+}
+.metrics .metric-label > span {
+  display: none;
+}
+.metrics .metric-value,
+.metrics .metric-value.mono {
+  margin-top: 8px;
+  font-size: 18px;
+  line-height: 1.4;
+  letter-spacing: 0;
+  overflow-wrap: anywhere;
+}
+.metrics #deviceSn,
+.metrics #firmware {
+  font-size: 13px;
+  line-height: 25px;
+}
+.metrics .metric-value small {
+  margin-left: 3px;
+  font-size: 10px;
+}
+.metrics .metric-foot {
+  margin-top: 6px;
+  font-size: 9px;
+  line-height: 1.5;
+  gap: 4px;
+  flex-wrap: wrap;
+  overflow-wrap: anywhere;
+}
+.metrics .meter {
+  width: 34px;
+}
+@media (max-width: 650px) {
+  #section-overview .metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }

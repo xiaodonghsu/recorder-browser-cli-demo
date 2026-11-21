@@ -101,6 +101,8 @@ test("authorization is below connection and blocks queries until a valid authori
 test("session log stays docked across navigation and correlates actions without exposing inputs", async ({
   page,
 }) => {
+  // Keep the workspace scrollable even with the compact device summary.
+  await page.setViewportSize({ width: 1440, height: 800 });
   await page.goto("/");
   await page.locator("#connect").click();
   await authorizeDevice(page);

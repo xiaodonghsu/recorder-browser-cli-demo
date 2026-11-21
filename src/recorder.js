@@ -31,6 +31,8 @@ export class Recorder extends EventTarget {
     this.state = {
       connected: false,
       authenticated: false,
+      sn: null,
+      snStatus: "idle",
       recording: null,
       live: "stopped",
       bytes: 0,
@@ -64,7 +66,10 @@ export class Recorder extends EventTarget {
       // Must be called directly inside a user gesture, before any await.
       const device = await this.bluetooth.requestDevice(
         compat
-          ? { acceptAllDevices: true, optionalServices: [UUID.service] }
+          ? {
+              acceptAllDevices: true,
+              optionalServices: [UUID.service],
+            }
           : {
               filters: [
                 { services: [UUID.service] },
@@ -157,6 +162,8 @@ export class Recorder extends EventTarget {
       battery: null,
       capacity: null,
       version: null,
+      sn: null,
+      snStatus: "idle",
       filename: null,
       gain: null,
       duration: null,
@@ -363,6 +370,8 @@ export class Recorder extends EventTarget {
   async refresh() {
     if (!this.state.authenticated)
       throw new Error("请先完成设备授权，再获取设备信息");
+    const generation = this.generation;
+    await this.readSerialNumber();
     for (const [type, cmd] of [
       [0, 3],
       [0, 1],
@@ -372,13 +381,30 @@ export class Recorder extends EventTarget {
       [3, 23],
       [3, 25],
     ]) {
-      if (!this.state.connected || !this.state.authenticated) break;
+      if (generation !== this.generation || !this.state.connected || !this.state.authenticated) break;
       try {
         await this.request(type, cmd);
       } catch (e) {
         this.log("WARN", e.message);
       }
       if (!this.state.connected) break;
+    }
+  }
+  async readSerialNumber() {
+    const generation = this.generation;
+    if (!this.state.connected || !this.state.authenticated) return;
+    this.update({ sn: null, snStatus: "reading" });
+    try {
+      // PNote.getSn(): AE21 sends 0-12; AE22 returns 0-13 + UTF-8 SN.
+      const response = await this.request(0, 12, [], [13]);
+      if (generation !== this.generation) return;
+      const sn = new TextDecoder().decode(response.body);
+      this.update({ sn: sn || null, snStatus: sn ? "ready" : "unavailable" });
+      if (!sn) this.log("WARN", "设备未提供 SN，其他设备信息继续读取");
+    } catch {
+      if (generation !== this.generation) return;
+      this.update({ sn: null, snStatus: "unavailable" });
+      this.log("WARN", "SN 读取失败或设备不支持，其他设备信息继续读取");
     }
   }
   syncClock() {
